@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdio.h>
 #include "stdlib.h"
+#include "PID.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,6 +51,7 @@
 
 /* USER CODE BEGIN PV */
 float AdcResult[2];
+arm_pid_instance_f32 PID;
 uint8_t UartMsg[9];
 /* USER CODE END PV */
 
@@ -100,9 +102,11 @@ int main(void)
   HAL_ADC_Start_IT(&hadc1);
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_UART_Receive_IT(&huart2, (uint8_t*)UartMsg, 9);
+  HAL_TIM_PWM_Start(&htim3,1);
   HAL_TIM_PWM_Start(&htim3,2);
   HAL_TIM_PWM_Start(&htim3,3);
   HAL_TIM_PWM_Start(&htim3,4);
+  PID_init(&PID);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -166,11 +170,18 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+	static int Sendcounter=0;
+	if(Sendcounter==0)
+	{
 	char buffer[50];
 	int n;
 	float diff=AdcResult[1]-AdcResult[0];
 	n=sprintf(buffer,"ADC diff %f \n",diff);
 	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, n, 10);
+	}
+	int u=PID_Routine(&PID, AdcResult);
+	__HAL_TIM_SET_COMPARE(&htim3,1,u);
+	Sendcounter=(Sendcounter+1)%100;
 }
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
