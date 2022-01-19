@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -28,9 +29,11 @@
 /* USER CODE BEGIN Includes */
 #include "stdint.h"
 #include <stdio.h>
-#include <stdio.h>
 #include "stdlib.h"
 #include "PID.h"
+#include "lcd.h"
+#include "lcd_config.h"
+#include "menu.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,7 +53,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-float AdcResult[2];
+volatile uint16_t  AdcCon[2];
+uint16_t LCDADCconv;
 arm_pid_instance_f32 PID;
 uint8_t UartMsg[9];
 /* USER CODE END PV */
@@ -95,17 +99,18 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-  MX_ADC1_Init();
   MX_TIM2_Init();
+  MX_DMA_Init();
   MX_TIM3_Init();
+  MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_ADC_Start_IT(&hadc1);
   HAL_TIM_Base_Start_IT(&htim2);
-  HAL_UART_Receive_IT(&huart2, (uint8_t*)UartMsg, 9);
+  HAL_UART_Receive_IT(&huart2, (uint8_t*)UartMsg, strlen("LED1=100"));
   HAL_TIM_PWM_Start(&htim3,1);
   HAL_TIM_PWM_Start(&htim3,2);
   HAL_TIM_PWM_Start(&htim3,3);
   HAL_TIM_PWM_Start(&htim3,4);
+  LCD_Init(&hlcd1);
   PID_init(&PID);
   /* USER CODE END 2 */
 
@@ -113,6 +118,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+//	  menuDispRoutine();
+//	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -170,38 +177,44 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+	if(htim->Instance==TIM2)
+	{
+
+	HAL_ADC_Start_DMA(&hadc2, (uint32_t*)AdcCon,2);
+		float ADCVolt[sizeof(AdcCon)/sizeof(AdcCon[0])];
+		for(int i=0;i<sizeof(AdcCon)/sizeof(AdcCon[0]);i++)
+		{
+			ADCVolt[i]=AdcCon[i]*3.3f/4095.0f;
+		}
 	static int Sendcounter=0;
 	if(Sendcounter==0)
 	{
 	char buffer[50];
 	int n;
-	float diff=AdcResult[1]-AdcResult[0];
-	n=sprintf(buffer,"ADC diff %f \n",diff);
+	int diff=AdcCon[0];
+	int diff2=AdcCon[1];
+	n=sprintf(buffer,"ADC %d,%d\r\n",diff,diff2);
 	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, n, 10);
 	}
-	int u=PID_Routine(&PID, AdcResult);
-	__HAL_TIM_SET_COMPARE(&htim3,1,u);
-	Sendcounter=(Sendcounter+1)%100;
-}
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-	static int MeasurNr=0;
-	uint16_t Conversion=HAL_ADC_GetValue(&hadc1);
-	AdcResult[MeasurNr]=Conversion*5/4095.0f;
-	if(MeasurNr==0) MeasurNr++;
-	else MeasurNr--;
+	//int u=PID_Routine(&PID, AdcCon);
+	//__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,u);
+	Sendcounter=(Sendcounter+1)%10;
+	}
+
 }
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	char LEDnr;
+	int LEDnr;
 	char LEDduty[3];
-	sscanf((char*)UartMsg,"LED%c=%s",&LEDnr,LEDduty);
+	sscanf((char*)UartMsg,"LED%d=%s\n",&LEDnr,LEDduty);
+	int Pulse=atoi(LEDduty)*20000.0f/100.0f;
 	switch(LEDnr)
 	{
-	case '1':__HAL_TIM_SET_COMPARE(&htim3,2,atoi(LEDduty)*10);break;
-	case '2':__HAL_TIM_SET_COMPARE(&htim3,3,atoi(LEDduty)*10);break;
-	case '3':__HAL_TIM_SET_COMPARE(&htim3,4,atoi(LEDduty)*10);break;
+	case 1:__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_2,Pulse);break;
+	case 2:__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,Pulse);break;
+	case 3:__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_4,Pulse);break;
 	}
+HAL_UART_Receive_IT(&huart2, (uint8_t*)UartMsg, strlen("LED1=100"));
 }
 /* USER CODE END 4 */
 

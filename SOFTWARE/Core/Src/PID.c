@@ -16,7 +16,7 @@ int PID_Routine(arm_pid_instance_f32 *PID,float ADC[])
 {
 	float32_t e=ADC[1]-ADC[0];
 	int u=arm_pid_f32(PID,e);
-	if(u>1000)u=1000;
-	if(u<0)u=0;
+	if(u>2000)u=2000;
+	if(u<1000)u=1000;
 	return u;
 }
