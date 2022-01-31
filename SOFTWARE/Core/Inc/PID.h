@@ -6,10 +6,11 @@
  */
 #include "arm_math.h"
 #include "stdint.h"
+#include <stdlib.h>
 #define KD 0
-#define KI 0.5
-#define KP 0
-#define Tp 0.001
+#define KI 0.3
+#define KP 0.9
+#define Tp 0.01
 
 void PID_init(arm_pid_instance_f32 *PID);
-int PID_Routine(arm_pid_instance_f32 *PID,float ADC[]);
+int Regulation(arm_pid_instance_f32 *PID,uint16_t e);

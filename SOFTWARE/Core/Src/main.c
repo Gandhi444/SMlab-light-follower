@@ -118,8 +118,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  menuDispRoutine();
-//	  HAL_Delay(1000);
+	  menuDispRoutine();
+	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -181,24 +181,26 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	{
 
 	HAL_ADC_Start_DMA(&hadc2, (uint32_t*)AdcCon,2);
-		float ADCVolt[sizeof(AdcCon)/sizeof(AdcCon[0])];
-		for(int i=0;i<sizeof(AdcCon)/sizeof(AdcCon[0]);i++)
-		{
-			ADCVolt[i]=AdcCon[i]*3.3f/4095.0f;
-		}
+//		float ADCVolt[sizeof(AdcCon)/sizeof(AdcCon[0])];
+//		for(int i=0;i<sizeof(AdcCon)/sizeof(AdcCon[0]);i++)
+//		{
+//			ADCVolt[i]=AdcCon[i]*3.3f/4095.0f;
+//		}
+	int e=AdcCon[1]-AdcCon[0];
 	static int Sendcounter=0;
 	if(Sendcounter==0)
 	{
 	char buffer[50];
 	int n;
-	int diff=AdcCon[0];
-	int diff2=AdcCon[1];
-	n=sprintf(buffer,"ADC %d,%d\r\n",diff,diff2);
+
+
+	n=sprintf(buffer,"ADC %d\r\n",e);
 	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, n, 10);
 	}
-	//int u=PID_Routine(&PID, AdcCon);
-	//__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,u);
-	Sendcounter=(Sendcounter+1)%10;
+	int u=Regulation(&PID, e);
+	__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_2,u);
+	int test=100*__HAL_TIM_GET_COMPARE(&htim3,TIM_CHANNEL_2)/20000.0f;
+	Sendcounter=(Sendcounter+1)%1;
 	}
 
 }
