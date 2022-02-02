@@ -1,5 +1,5 @@
 /*
- * PID.h
+ * Regulator.h
  *
  *  Created on: Jan 17, 2022
  *      Author: anton

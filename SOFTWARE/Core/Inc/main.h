@@ -75,6 +75,15 @@ void Error_Handler(void);
 #define LCD_D7_GPIO_Port GPIOA
 #define LCD_RS_Pin GPIO_PIN_9
 #define LCD_RS_GPIO_Port GPIOA
+#define Left_Pin GPIO_PIN_10
+#define Left_GPIO_Port GPIOA
+#define Left_EXTI_IRQn EXTI15_10_IRQn
+#define Down_Pin GPIO_PIN_11
+#define Down_GPIO_Port GPIOA
+#define Down_EXTI_IRQn EXTI15_10_IRQn
+#define Right_Pin GPIO_PIN_12
+#define Right_GPIO_Port GPIOA
+#define Right_EXTI_IRQn EXTI15_10_IRQn
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14

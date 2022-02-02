@@ -18,6 +18,7 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <Regulator.h>
 #include "main.h"
 #include "adc.h"
 #include "dma.h"
@@ -30,7 +31,6 @@
 #include "stdint.h"
 #include <stdio.h>
 #include "stdlib.h"
-#include "PID.h"
 #include "lcd.h"
 #include "lcd_config.h"
 #include "menu.h"
@@ -181,25 +181,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	{
 
 	HAL_ADC_Start_DMA(&hadc2, (uint32_t*)AdcCon,2);
-//		float ADCVolt[sizeof(AdcCon)/sizeof(AdcCon[0])];
-//		for(int i=0;i<sizeof(AdcCon)/sizeof(AdcCon[0]);i++)
-//		{
-//			ADCVolt[i]=AdcCon[i]*3.3f/4095.0f;
-//		}
 	int e=AdcCon[1]-AdcCon[0];
 	static int Sendcounter=0;
 	if(Sendcounter==0)
 	{
 	char buffer[50];
 	int n;
-
-
 	n=sprintf(buffer,"ADC %d\r\n",e);
 	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, n, 10);
 	}
 	int u=Regulation(&PID, e);
 	__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_2,u);
-	int test=100*__HAL_TIM_GET_COMPARE(&htim3,TIM_CHANNEL_2)/20000.0f;
 	Sendcounter=(Sendcounter+1)%1;
 	}
 
@@ -212,12 +204,18 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	int Pulse=atoi(LEDduty)*20000.0f/100.0f;
 	switch(LEDnr)
 	{
-	case 1:__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_2,Pulse);break;
+	case 1:__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,Pulse);break;
 	case 2:__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,Pulse);break;
 	case 3:__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_4,Pulse);break;
 	}
 HAL_UART_Receive_IT(&huart2, (uint8_t*)UartMsg, strlen("LED1=100"));
 }
+void HAL_GPIO_EXTI_Callback ( uint16_t GPIO_Pin )
+{
+	void menubuttons(uint16_t GPIO_Pin);
+}
+
+
 /* USER CODE END 4 */
 
 /**
