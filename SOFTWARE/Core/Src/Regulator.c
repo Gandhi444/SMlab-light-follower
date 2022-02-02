@@ -1,10 +1,16 @@
 /*
- * PID.c
+ * Regulator.c
  *
  *  Created on: Jan 17, 2022
  *      Author: anton
  */
-#include "PID.h"
+#include <Regulator.h>
+
+	/**
+	 * @brief Initialize PID instance
+	 * @param[in] *PID PID instance to initialize
+	 * @return None
+	 */
 void PID_init(arm_pid_instance_f32 *PID)
 {
 	PID->Kd=KD/Tp;
@@ -12,6 +18,13 @@ void PID_init(arm_pid_instance_f32 *PID)
 	PID->Kp=KP;
 	arm_pid_init_f32(PID, 0);
 }
+
+/**
+ * @brief Compute new control signal
+ * @param[in] *PID PID instance
+ * @param[in] e error value
+ * @return control signal value
+ */
 int Regulation(arm_pid_instance_f32 *PID,uint16_t e)
 {
 	float static u;
