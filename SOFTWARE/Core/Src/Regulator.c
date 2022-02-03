@@ -25,14 +25,11 @@ void PID_init(arm_pid_instance_f32 *PID)
  * @param[in] e error value
  * @return control signal value
  */
-int Regulation(arm_pid_instance_f32 *PID,uint16_t e)
+int Regulation(arm_pid_instance_f32 *PID,int  e)
 {
-	float static u;
-	if(abs(e)>50)
-	{
-	u=arm_pid_f32(PID,e);
-	if(u<-500)u=-500;
-	if(u>500)u=500;
-	}
-	return u+1500;
+	float  u;
+	u=arm_pid_f32(PID, e);
+	if(u<-1000)u=-1000;
+	else if(u>1000)u=1000;
+	return u+1400;
 }

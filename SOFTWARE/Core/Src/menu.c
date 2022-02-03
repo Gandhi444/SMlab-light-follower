@@ -7,7 +7,7 @@
 #include "menu.h"
 
 
-int state=0;
+int state=1;
 
 
 /**
@@ -69,9 +69,9 @@ void menuDispRoutine()
  * @param[in] GPIO_Pin pin that was pressed
  * @return none
  */
-void menubuttons(uint16_t GPIO_Pin)
+void menubuttons(uint16_t GPIO_button)
 {
-	if(GPIO_Pin==Left_Pin)
+	if(GPIO_button==Left_Pin)
 	{
 		switch(state)
 		{
@@ -80,7 +80,7 @@ void menubuttons(uint16_t GPIO_Pin)
 			case 2: __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,__HAL_TIM_GET_COMPARE(&htim3,TIM_CHANNEL_4)-200);break;
 		}
 	}
-	if(GPIO_Pin==Right_Pin)
+	if(GPIO_button==Right_Pin)
 		{
 			switch(state)
 			{
@@ -89,7 +89,7 @@ void menubuttons(uint16_t GPIO_Pin)
 				case 2: __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_4,__HAL_TIM_GET_COMPARE(&htim3,TIM_CHANNEL_4)-200);break;
 			}
 		}
-	if(GPIO_Pin==Down_Pin)
+	if(GPIO_button==Down_Pin)
 	{
 		state=(state+1)%NR_OF_STATES;
 	}

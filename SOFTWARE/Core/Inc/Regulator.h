@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #define KD 0
 #define KI 0.3
-#define KP 0.9
-#define Tp 0.01
+#define KP 0.03
+#define Tp 0.1
 
 void PID_init(arm_pid_instance_f32 *PID);
-int Regulation(arm_pid_instance_f32 *PID,uint16_t e);
+int Regulation(arm_pid_instance_f32 *PID, int e);

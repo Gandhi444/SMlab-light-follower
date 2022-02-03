@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under BSD 3-Clause license,
+ * the "License"; You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at:
+ *                        opensource.org/licenses/BSD-3-Clause
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -53,7 +53,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-volatile uint16_t  AdcCon[2];
+volatile uint16_t AdcCon[2];
+int e = 0;
+int u = 0;
 uint16_t LCDADCconv;
 arm_pid_instance_f32 PID;
 uint8_t UartMsg[9];
@@ -104,26 +106,25 @@ int main(void)
   MX_TIM3_Init();
   MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Base_Start_IT(&htim2);
-  HAL_UART_Receive_IT(&huart2, (uint8_t*)UartMsg, strlen("LED1=100"));
-  HAL_TIM_PWM_Start(&htim3,1);
-  HAL_TIM_PWM_Start(&htim3,2);
-  HAL_TIM_PWM_Start(&htim3,3);
-  HAL_TIM_PWM_Start(&htim3,4);
-  LCD_Init(&hlcd1);
-  PID_init(&PID);
+	HAL_TIM_Base_Start_IT(&htim2);
+	HAL_UART_Receive_IT(&huart2, (uint8_t*) UartMsg, strlen("LED1=100"));
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+	LCD_Init(&hlcd1);
+	PID_init(&PID);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-	  menuDispRoutine();
-	  HAL_Delay(500);
+	while (1) {
+		menuDispRoutine();
+		HAL_Delay(500);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+	}
   /* USER CODE END 3 */
 }
 
@@ -175,46 +176,39 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-	if(htim->Instance==TIM2)
-	{
-
-	HAL_ADC_Start_DMA(&hadc2, (uint32_t*)AdcCon,2);
-	int e=AdcCon[1]-AdcCon[0];
-	static int Sendcounter=0;
-	if(Sendcounter==0)
-	{
-	char buffer[50];
-	int n;
-	n=sprintf(buffer,"ADC %d\r\n",e);
-	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, n, 10);
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	if (htim->Instance == TIM2) {
+		HAL_ADC_Start_DMA(&hadc2, (uint32_t*) AdcCon, 2);
+		char buffer[50];
+		e = AdcCon[1] - AdcCon[0];
+		u = Regulation(&PID, e);
+		int n = sprintf(buffer, "ADC %d, %d\n", e, u);
+		HAL_UART_Transmit(&huart2, (uint8_t*) buffer, n, 10);
+		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, u);
 	}
-	int u=Regulation(&PID, e);
-	__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_2,u);
-	Sendcounter=(Sendcounter+1)%1;
-	}
-
 }
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	HAL_UART_Receive_IT(&huart2, (uint8_t*) UartMsg, strlen("LED1=100"));
 	int LEDnr;
 	char LEDduty[3];
-	sscanf((char*)UartMsg,"LED%d=%s\n",&LEDnr,LEDduty);
-	int Pulse=atoi(LEDduty)*20000.0f/100.0f;
-	switch(LEDnr)
-	{
-	case 1:__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,Pulse);break;
-	case 2:__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,Pulse);break;
-	case 3:__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_4,Pulse);break;
+	sscanf((char*) UartMsg, "LED%d=%s", &LEDnr, LEDduty);
+	int Pulse = atoi(LEDduty) * 20000.0f / 100.0f;
+	switch (LEDnr) {
+	case 1:
+		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, Pulse);
+		break;
+	case 2:
+		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, Pulse);
+		break;
+	case 3:
+		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, Pulse);
+		break;
 	}
-HAL_UART_Receive_IT(&huart2, (uint8_t*)UartMsg, strlen("LED1=100"));
-}
-void HAL_GPIO_EXTI_Callback ( uint16_t GPIO_Pin )
-{
-	void menubuttons(uint16_t GPIO_Pin);
-}
 
+}
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	menubuttons(GPIO_Pin);
+}
 
 /* USER CODE END 4 */
 
@@ -225,11 +219,10 @@ void HAL_GPIO_EXTI_Callback ( uint16_t GPIO_Pin )
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+	/* User can add his own implementation to report the HAL error return state */
+	__disable_irq();
+	while (1) {
+	}
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -244,7 +237,7 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
+	/* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }

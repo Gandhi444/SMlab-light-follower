@@ -36,7 +36,6 @@ QT_CHARTS_USE_NAMESPACE
 MainWidget::MainWidget(QWidget *parent) :
     QWidget(parent)
 {
-
     LCD1 = new QLCDNumber();
     LCD1->setSegmentStyle(QLCDNumber::Flat);
     LCD1->setAutoFillBackground(0);
@@ -64,18 +63,30 @@ MainWidget::MainWidget(QWidget *parent) :
     LED3 = new QSlider(Qt::Vertical);
     LED3->setRange(0, 100);
     LED3->setValue(0);
+    device = new QSerialPort;
+    //wite to LCD
     connect(LED1, SIGNAL(valueChanged(int)), LCD1, SLOT(display(int)));
     connect(LED2, SIGNAL(valueChanged(int)), LCD2, SLOT(display(int)));
     connect(LED3, SIGNAL(valueChanged(int)), LCD3, SLOT(display(int)));
-    connect(LED1, SIGNAL(valueChanged(int)), LCD1, SLOT(display(int)));
-    connect(LED1, SIGNAL(valueChanged(int)), this, SLOT(sendLED1(int)));
-    connect(LED1, SIGNAL(valueChanged(int)), this, SLOT(sendLED2(int)));
-    connect(LED1, SIGNAL(valueChanged(int)), this, SLOT(sendLED3(int)));
+    //send
+    connect(LED1, SIGNAL(sliderReleased()), this, SLOT(sendLED()));
+    connect(LED2, SIGNAL(sliderReleased()), this, SLOT(sendLED()));
+    connect(LED3, SIGNAL(sliderReleased()), this, SLOT(sendLED()));
+    //write to variable
+    connect(LED1, SIGNAL(valueChanged(int)), this, SLOT(setLED1(int)));
+    connect(LED2, SIGNAL(valueChanged(int)), this, SLOT(setLED2(int)));
+    connect(LED3, SIGNAL(valueChanged(int)), this, SLOT(setLED3(int)));
+    //reading serial data
+
+
+
     text = new QLabel;
     text->setText("");
     serialCombo = new QComboBox;
-    device = new QSerialPort;
 
+
+    data = new QLabel;
+    data->setText("");
     m_mainLayout = new QGridLayout();
 
     setLayout(m_mainLayout);
@@ -89,18 +100,17 @@ MainWidget::MainWidget(QWidget *parent) :
     m_mainLayout->addWidget(LCD2);
     m_mainLayout->addWidget(LED3);
     m_mainLayout->addWidget(LCD3);
+    m_mainLayout->addWidget(data);
 }
 
-void MainWidget::clear()
-{
-
-}
 
 void MainWidget::searchSerial()
 {
     dostepne.clear();
     serialCombo->clear();
     dostepne = QSerialPortInfo::availablePorts();
+    if (device->isOpen())
+           device->close();
     if(dostepne.count()) {
         for (int i = 0; i < dostepne.count(); i++) {
             text->setText("dostepne:");
@@ -113,6 +123,8 @@ void MainWidget::searchSerial()
     }
 }
 
+
+
 void MainWidget::connectSerial()
 {
     device->close();
@@ -121,7 +133,7 @@ void MainWidget::connectSerial()
     {
         nazwaPortu = serialCombo->currentText();
         device->setPortName(nazwaPortu);
-        device->setBaudRate(QSerialPort::Baud115200);
+        device->setBaudRate(QSerialPort::Baud9600);
         device->setDataBits(QSerialPort::Data8);
         device->setParity(QSerialPort::NoParity);
         device->setFlowControl(QSerialPort::NoFlowControl);
@@ -131,6 +143,8 @@ void MainWidget::connectSerial()
             message.append(dostepne.at(serialCombo->currentIndex()).portName());
             text->setText(message);
             connected = true;
+            //connect(device, SIGNAL(QSerialPort::readyRead()), this, SLOT(readData()));
+
         }
     }
     else
@@ -140,46 +154,77 @@ void MainWidget::connectSerial()
     }
 }
 
-void MainWidget::sendLED1(int val)
+void MainWidget::setLED1(int val)
 {
     value_LED1=val;
-    /*
-    QByteArray message = QByteArray::number(value_LED1);
-    QByteArray count("LED1");
-    text->setText(message);
-    */
     if(connected && device->isOpen())
     {
-            QByteArray message = QByteArray::number(value_LED1);
-            QByteArray count("LED1");
-            message.insert(3, QByteArray("message"));
-            device->write(message);
+            message = QByteArray::number(value_LED1);
+            if(message.length() == 1)
+            {
+                message.insert(0, QByteArray("00"));
+            }
+            else if(message.length() == 2)
+            {
+                message.insert(0, QByteArray("0"));
+            }
+            QByteArray count("LED1=");
+            message.insert(0, count);
     }
 }
 
-void MainWidget::sendLED2(int val)
+void MainWidget::setLED2(int val)
 {
     value_LED2=val;
     if(connected && device->isOpen())
     {
-            QByteArray message = QByteArray::number(value_LED2);
-            QByteArray count("LED2");
-            message.insert(3, QByteArray("message"));
-            device->write(message);
+            message = QByteArray::number(value_LED2);
+            if(message.length() == 1)
+            {
+                message.insert(0, QByteArray("00"));
+            }
+            else if(message.length() == 2)
+            {
+                message.insert(0, QByteArray("0"));
+            }
+            QByteArray count("LED2=");
+            message.insert(0, count);
     }
 }
 
-void MainWidget::sendLED3(int val)
+void MainWidget::setLED3(int val)
 {
     value_LED3=val;
     if(connected && device->isOpen())
     {
-            QByteArray message = QByteArray::number(value_LED3);
-            QByteArray count("LED3");
-            message.insert(3, QByteArray("message"));
-            device->write(message);
+            message = QByteArray::number(value_LED3);
+            if(message.length() == 1)
+            {
+                message.insert(0, QByteArray("00"));
+            }
+            else if(message.length() == 2)
+            {
+                message.insert(0, QByteArray("0"));
+            }
+            QByteArray count("LED3=");
+            message.insert(0, count);
     }
 }
 
 
+void MainWidget::sendLED()
+{
+    if(connected && device->isOpen())
+    {
+        //message.insert(8, "\n");
+        device->write(message);
+        //std::string temp = message.toStdString();
+        //std::cout<<temp<<std::endl;
+        readData();
+    }
+}
 
+void MainWidget::readData()
+{
+    data->setText(device->readLine());
+}

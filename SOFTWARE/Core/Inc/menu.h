@@ -15,4 +15,5 @@
 
 void add_spaces(char *dest, int num_of_spaces);
 void menuDispRoutine();
-void menubuttons(uint16_t);
+void menubuttons(uint16_t GPIO_button);
+

@@ -64,6 +64,7 @@ void Error_Handler(void);
 #define USART_RX_GPIO_Port GPIOA
 #define Left_Pin GPIO_PIN_5
 #define Left_GPIO_Port GPIOA
+#define Left_EXTI_IRQn EXTI9_5_IRQn
 #define LCD_D6_Pin GPIO_PIN_10
 #define LCD_D6_GPIO_Port GPIOB
 #define LCD_E_Pin GPIO_PIN_7
@@ -84,8 +85,10 @@ void Error_Handler(void);
 #define LCD_D4_GPIO_Port GPIOB
 #define Down_Pin GPIO_PIN_8
 #define Down_GPIO_Port GPIOB
+#define Down_EXTI_IRQn EXTI9_5_IRQn
 #define Right_Pin GPIO_PIN_9
 #define Right_GPIO_Port GPIOB
+#define Right_EXTI_IRQn EXTI9_5_IRQn
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

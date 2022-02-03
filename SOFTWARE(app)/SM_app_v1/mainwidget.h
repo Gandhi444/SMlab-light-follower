@@ -81,12 +81,13 @@ public:
     explicit MainWidget(QWidget *parent = 0);
 
 public slots:
-    void clear();
     void connectSerial();
     void searchSerial();
-    void sendLED1(int val);
-    void sendLED2(int val);
-    void sendLED3(int val);
+    void setLED1(int val);
+    void setLED2(int val);
+    void setLED3(int val);
+    void sendLED();
+    void readData();
 
 private:
     //Layout
@@ -105,8 +106,10 @@ private:
     QSlider *LED3;
     QLCDNumber *LCD3;
     QComboBox  *serialCombo;
+    QLabel *data;
 
     //Variables
+    QByteArray message;
     QSerialPort *device;
     QLabel *text;
     QString nazwaPortu;
