@@ -18,7 +18,6 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <Regulator.h>
 #include "main.h"
 #include "adc.h"
 #include "dma.h"
@@ -34,6 +33,7 @@
 #include "lcd.h"
 #include "lcd_config.h"
 #include "menu.h"
+#include "Regulator.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -119,7 +119,7 @@ int main(void)
   while (1)
   {
 	  menuDispRoutine();
-	  HAL_Delay(1000);
+	  HAL_Delay(500);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
